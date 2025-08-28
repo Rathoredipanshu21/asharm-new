@@ -2,7 +2,15 @@
 
 session_start();
 // Make sure this path is correct and points to your database connection file.
-require_once '../config/db.php'; 
+require_once '../config/db.php';
+
+// --- Handle "Change Family" action ---
+// This will clear the session and reload the page to show the family code input form.
+if (isset($_GET['action']) && $_GET['action'] === 'change_family') {
+    unset($_SESSION['family_code']);
+    header('Location: arghya_pradan.php');
+    exit();
+}
 
 // --- Helper Functions ---
 function generateUniqueInvoiceNo($pdo) {
@@ -60,46 +68,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // --- ACTION: Save Donation ---
     if (isset($_POST['action']) && $_POST['action'] === 'save_donation') {
         $family_id = $_POST['family_id'];
-        $donations = $_POST['donations'];
+        // Use `donations` only if it exists, otherwise, it's an empty array.
+        // This handles the case where all members are unchecked and nothing is submitted.
+        $donations = $_POST['donations'] ?? [];
         $total_amount = 0;
 
-        $pdo->beginTransaction();
-        try {
-            foreach ($donations as $member_id => $types) {
-                foreach ($types as $type_id => $amount) {
-                    if (!empty($amount) && is_numeric($amount)) {
-                        $total_amount += (float)$amount;
-                    }
-                }
-            }
-
-            $invoice_no = generateUniqueInvoiceNo($pdo);
-            $stmt_invoice = $pdo->prepare("INSERT INTO donation_invoices (invoice_no, family_id, total_amount) VALUES (?, ?, ?)");
-            $stmt_invoice->execute([$invoice_no, $family_id, $total_amount]);
-            $invoice_id = $pdo->lastInsertId();
-
-            $stmt_items = $pdo->prepare("INSERT INTO donation_items (invoice_id, member_id, donation_type_id, amount) VALUES (?, ?, ?, ?)");
-            foreach ($donations as $member_id => $types) {
-                foreach ($types as $type_id => $amount) {
-                    if (!empty($amount) && is_numeric($amount)) {
-                        $stmt_items->execute([$invoice_id, $member_id, $type_id, (float)$amount]);
-                    }
-                }
-            }
-            
-            $pdo->commit();
-            $formMessage = "Donation saved successfully! Invoice No: " . $invoice_no;
-            $formMessageType = 'success';
-            unset($_SESSION['family_code']);
-            $family_code = null;
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            $formMessage = "Error saving donation: " . $e->getMessage();
+        if (empty($donations)) {
+            $formMessage = "No donations to save. Please select at least one devotee and enter an amount.";
             $formMessageType = 'error';
+        } else {
+            $pdo->beginTransaction();
+            try {
+                foreach ($donations as $member_id => $types) {
+                    foreach ($types as $type_id => $amount) {
+                        if (!empty($amount) && is_numeric($amount)) {
+                            $total_amount += (float)$amount;
+                        }
+                    }
+                }
+                
+                // Only proceed if there's a valid total amount
+                if ($total_amount > 0) {
+                    $invoice_no = generateUniqueInvoiceNo($pdo);
+                    $stmt_invoice = $pdo->prepare("INSERT INTO donation_invoices (invoice_no, family_id, total_amount) VALUES (?, ?, ?)");
+                    $stmt_invoice->execute([$invoice_no, $family_id, $total_amount]);
+                    $invoice_id = $pdo->lastInsertId();
+
+                    $stmt_items = $pdo->prepare("INSERT INTO donation_items (invoice_id, member_id, donation_type_id, amount) VALUES (?, ?, ?, ?)");
+                    foreach ($donations as $member_id => $types) {
+                        foreach ($types as $type_id => $amount) {
+                            if (!empty($amount) && is_numeric($amount)) {
+                                $stmt_items->execute([$invoice_id, $member_id, $type_id, (float)$amount]);
+                            }
+                        }
+                    }
+                    
+                    $pdo->commit();
+                    $formMessage = "Donation saved successfully! Invoice No: " . $invoice_no;
+                    $formMessageType = 'success';
+                    unset($_SESSION['family_code']);
+                    $family_code = null;
+                } else {
+                    // This prevents creating empty invoices
+                    $formMessage = "Total donation amount is zero. Nothing was saved.";
+                    $formMessageType = 'error';
+                }
+
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                $formMessage = "Error saving donation: " . $e->getMessage();
+                $formMessageType = 'error';
+            }
         }
     }
 }
 
+// --- Load family data if code exists in session (for page reloads) ---
 if (!empty($family_code) && !$family_data) {
     $stmt = $pdo->prepare("
         SELECT f.id as family_id, f.family_code, f.head_of_family_id, fm_head.name as head_name
@@ -121,7 +145,7 @@ if (!empty($family_code) && !$family_data) {
     }
 }
 
-// UPDATED QUERY: Fetches 'amount' as well
+// Fetch all donation types and their default amounts
 $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
@@ -138,21 +162,33 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
             height: 100%;
             margin: 0;
             padding: 0;
-            background-color: #e5e7eb; /* A slightly darker gray for contrast */
+            background-color: #e5e7eb;
         }
         .form-input {
             border: 1px solid #d1d5db;
             text-align: center;
             width: 100%;
-            padding: 6px 4px; /* Increased padding */
+            padding: 6px 4px;
             border-radius: 4px;
-            font-size: 1rem; /* Increased font size */
+            font-size: 1rem;
         }
         .form-input:focus {
             outline: 2px solid #4f46e5;
             border-color: transparent;
         }
+        .row-disabled {
+            opacity: 0.5;
+            background-color: #f9fafb; /* gray-50 */
+        }
+        .row-disabled input[type="number"] {
+            background-color: #e5e7eb; /* gray-200 */
+            pointer-events: none;
+        }
         @media print {
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
             #print-area {
@@ -164,14 +200,21 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
                 padding: 0;
                 margin: 0;
             }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            /* Hide unchecked rows when printing */
+            .member-row:not(:has(.member-checkbox:checked)) {
+                display: none;
+            }
+             /* Hide the checkbox column when printing */
+            #donation-table .checkbox-col {
+                display: none;
+            }
         }
     </style>
 </head>
 <body class="flex flex-col">
 
     <?php if (empty($family_data)): ?>
-        <!-- STEP 1: FAMILY CODE ENTRY FORM (Centered on page) -->
         <div class="flex-grow flex items-center justify-center">
             <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden md:max-w-2xl w-full">
                 <div class="md:flex">
@@ -194,14 +237,12 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
             </div>
         </div>
     <?php else: ?>
-        <!-- STEP 2: DONATION ENTRY FORM (Full screen layout) -->
         <div class="w-full h-full flex flex-col p-4">
             <form action="arghya_pradan.php" method="POST" id="donation-form" class="flex-grow flex flex-col">
                 <input type="hidden" name="action" value="save_donation">
                 <input type="hidden" name="family_id" value="<?= $family_data['family_id'] ?>">
                 
                 <div id="print-area" class="bg-white p-6 rounded-lg shadow-lg flex-grow flex flex-col">
-                    <!-- Header -->
                     <header class="text-center mb-4 border-b pb-4">
                          <div class="flex items-center justify-between">
                             <img src="path/to/your/logo.png" alt="Logo" class="h-24 w-24" onerror="this.style.display='none'">
@@ -222,11 +263,13 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
                         </div>
                     </header>
 
-                    <!-- Scrollable Donation Table -->
                     <div class="flex-grow overflow-auto">
                         <table class="min-w-full divide-y divide-gray-200 text-base" id="donation-table">
                             <thead class="bg-gray-100 sticky top-0">
                                 <tr>
+                                    <th class="px-3 py-3 text-left font-medium text-gray-600 uppercase tracking-wider checkbox-col">
+                                        <input type="checkbox" id="select-all-checkbox" checked title="Select/Deselect All">
+                                    </th>
                                     <th class="px-3 py-3 text-left font-medium text-gray-600 uppercase tracking-wider">Devotee</th>
                                     <th class="px-3 py-3 text-left font-medium text-gray-600 uppercase tracking-wider">Ritwik</th>
                                     <?php foreach ($donation_types as $type): ?>
@@ -238,11 +281,14 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($family_data['members'] as $member): ?>
                                     <tr class="member-row">
+                                        <td class="px-3 py-2 whitespace-nowrap checkbox-col">
+                                            <input type="checkbox" class="member-checkbox" checked>
+                                        </td>
                                         <td class="px-3 py-2 whitespace-nowrap font-medium"><?= htmlspecialchars($member['name']) ?></td>
                                         <td class="px-3 py-2 whitespace-nowrap"><?= htmlspecialchars($member['ritwik_name'] ?? 'N/A') ?></td>
                                         <?php foreach ($donation_types as $type): ?>
                                             <td class="px-1 py-1">
-                                                <input type="number" step="0.01" name="donations[<?= $member['id'] ?>][<?= $type['id'] ?>]" class="form-input donation-amount" data-member-id="<?= $member['id'] ?>" data-type-id="<?= $type['id'] ?>" value="<?= htmlspecialchars($type['amount'] ?? '') ?>">
+                                                <input type="number" step="0.01" name="donations[<?= $member['id'] ?>][<?= $type['id'] ?>]" class="form-input donation-amount" data-type-id="<?= $type['id'] ?>" value="<?= htmlspecialchars($type['amount'] ?? '') ?>">
                                             </td>
                                         <?php endforeach; ?>
                                         <td class="px-3 py-2 text-center font-bold member-total text-lg">0.00</td>
@@ -251,14 +297,14 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
                             </tbody>
                             <tfoot class="bg-gray-200 font-bold sticky bottom-0">
                                 <tr>
-                                    <td colspan="2" class="px-3 py-3 text-right">Column Totals</td>
+                                    <td colspan="3" class="px-3 py-3 text-right checkbox-col">Column Totals</td>
                                     <?php foreach ($donation_types as $type): ?>
                                         <td class="px-2 py-3 text-center type-total" id="total-type-<?= $type['id'] ?>">0.00</td>
                                     <?php endforeach; ?>
                                     <td class="px-3 py-3 text-center text-xl" id="grand-total">0.00</td>
                                 </tr>
                                 <tr class="bg-gray-300">
-                                    <td colspan="2" class="px-3 py-3 text-right text-lg">
+                                    <td colspan="3" class="px-3 py-3 text-right text-lg checkbox-col">
                                         No. of Persons: <span id="person-count">0</span>
                                     </td>
                                     <td colspan="<?= count($donation_types) ?>" class="px-3 py-3 text-right text-lg">Grand Total</td>
@@ -270,7 +316,7 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
                 </div>
 
                 <div class="mt-4 flex justify-end space-x-4 no-print flex-shrink-0">
-                    <a href="arghya_pradan.php" class="bg-gray-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 transition text-lg">
+                    <a href="arghya_pradan.php?action=change_family" class="bg-gray-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-600 transition text-lg">
                         <i class="fas fa-search mr-2"></i>Change Family
                     </a>
                     <button type="button" onclick="window.print()" class="bg-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-600 transition text-lg">
@@ -284,58 +330,112 @@ $donation_types = $pdo->query("SELECT id, name, amount FROM donation_types ORDER
         </div>
     <?php endif; ?>
 
-    <!-- Message Display -->
     <?php if ($formMessage): ?>
-    <div class="fixed top-5 right-5 max-w-md p-4 rounded-md shadow-lg text-center <?= $formMessageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+    <div id="alert-message" class="fixed top-5 right-5 max-w-md p-4 rounded-md shadow-lg text-center <?= $formMessageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
         <?= htmlspecialchars($formMessage) ?>
     </div>
+    <script>
+        // Auto-hide the alert message after 5 seconds
+        setTimeout(() => {
+            const alertMessage = document.getElementById('alert-message');
+            if(alertMessage) alertMessage.style.display = 'none';
+        }, 5000);
+    </script>
     <?php endif; ?>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const table = document.getElementById('donation-table');
-            if (!table) return;
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('donation-table');
+        if (!table) return;
 
-            const grandTotalEl = document.getElementById('grand-total');
-            const grandTotalFooterEl = document.getElementById('grand-total-footer');
-            const personCountEl = document.getElementById('person-count');
+        const grandTotalEl = document.getElementById('grand-total');
+        const grandTotalFooterEl = document.getElementById('grand-total-footer');
+        const personCountEl = document.getElementById('person-count');
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
 
-            function calculateTotals() {
-                let grandTotal = 0;
-                const memberRows = table.querySelectorAll('.member-row');
-                personCountEl.textContent = memberRows.length;
-                
-                memberRows.forEach(row => {
-                    let memberTotal = 0;
-                    row.querySelectorAll('.donation-amount').forEach(input => {
-                        const value = parseFloat(input.value) || 0;
-                        memberTotal += value;
-                    });
-                    row.querySelector('.member-total').textContent = memberTotal.toFixed(2);
-                    grandTotal += memberTotal;
-                });
-
-                table.querySelectorAll('.type-total').forEach(totalCell => {
-                    const typeId = totalCell.id.split('-')[2];
-                    let typeTotal = 0;
-                    table.querySelectorAll(`.donation-amount[data-type-id='${typeId}']`).forEach(input => {
-                        typeTotal += parseFloat(input.value) || 0;
-                    });
-                    totalCell.textContent = typeTotal.toFixed(2);
-                });
-
-                grandTotalEl.textContent = grandTotal.toFixed(2);
-                grandTotalFooterEl.textContent = grandTotal.toFixed(2);
+        function toggleRow(row, isEnabled) {
+            const inputs = row.querySelectorAll('.donation-amount');
+            if (isEnabled) {
+                row.classList.remove('row-disabled');
+                inputs.forEach(input => input.disabled = false);
+            } else {
+                row.classList.add('row-disabled');
+                inputs.forEach(input => input.disabled = true);
             }
+        }
 
-            table.addEventListener('input', function(e) {
-                if (e.target.classList.contains('donation-amount')) {
-                    calculateTotals();
+        function calculateTotals() {
+            let grandTotal = 0;
+            const memberRows = table.querySelectorAll('.member-row');
+            let activePersonCount = 0;
+
+            memberRows.forEach(row => {
+                const isChecked = row.querySelector('.member-checkbox').checked;
+                if (!isChecked) {
+                    row.querySelector('.member-total').textContent = '0.00';
+                    return; // Skip this row from calculations
                 }
+
+                activePersonCount++;
+                let memberTotal = 0;
+                row.querySelectorAll('.donation-amount').forEach(input => {
+                    const value = parseFloat(input.value) || 0;
+                    memberTotal += value;
+                });
+                row.querySelector('.member-total').textContent = memberTotal.toFixed(2);
+                grandTotal += memberTotal;
+            });
+            
+            personCountEl.textContent = activePersonCount;
+
+            // Calculate totals for each donation type (column totals)
+            table.querySelectorAll('.type-total').forEach(totalCell => {
+                const typeId = totalCell.id.split('-')[2];
+                let typeTotal = 0;
+                table.querySelectorAll(`.donation-amount[data-type-id='${typeId}']`).forEach(input => {
+                    // Only add to total if the input is not disabled
+                    if (!input.disabled) {
+                        typeTotal += parseFloat(input.value) || 0;
+                    }
+                });
+                totalCell.textContent = typeTotal.toFixed(2);
             });
 
+            grandTotalEl.textContent = grandTotal.toFixed(2);
+            grandTotalFooterEl.textContent = grandTotal.toFixed(2);
+        }
+
+        // --- Event Listeners ---
+
+        table.addEventListener('change', function(e) {
+            // Handle individual member checkboxes
+            if (e.target.classList.contains('member-checkbox')) {
+                const row = e.target.closest('.member-row');
+                toggleRow(row, e.target.checked);
+                calculateTotals();
+            }
+        });
+        
+        table.addEventListener('input', function(e) {
+            // Handle changes in donation amount inputs
+            if (e.target.classList.contains('donation-amount')) {
+                calculateTotals();
+            }
+        });
+
+        selectAllCheckbox.addEventListener('change', function() {
+            const allMemberCheckboxes = table.querySelectorAll('.member-checkbox');
+            allMemberCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                const row = checkbox.closest('.member-row');
+                toggleRow(row, checkbox.checked);
+            });
             calculateTotals();
         });
+
+        
+        calculateTotals();
+    });
     </script>
 
 </body>

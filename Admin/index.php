@@ -167,46 +167,61 @@
         </div>
 
         <nav class="sidebar-nav">
-            <ul>
-                <li>
-                    <a href="Dashboard.php" class="sidebar-link active" target="content-frame">
-                        <i class="fas fa-tachometer-alt"></i><span class="link-text">Dashboard</span>
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="add_ritwik.php" class="sidebar-link" target="content-frame">
-                        <i class="fas fa-user-tie"></i><span class="link-text">Add Ritwik</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="add_family.php" class="sidebar-link" target="content-frame">
-                        <i class="fas fa-users"></i><span class="link-text">Add Family</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="donation_types.php" class="sidebar-link" target="content-frame">
-                        <i class="fas fa-donate"></i><span class="link-text">Donation Types</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="arghya_pradan.php" class="sidebar-link" target="content-frame">
-                        <i class="fas fa-praying-hands"></i><span class="link-text">Arghya Pradan</span>
-                    </a>
-                </li>
-                 <li>
-                    <a href="invoice_list.php" class="sidebar-link" target="content-frame">
-                        <i class="fas fa-file-invoice"></i><span class="link-text">View Invoices</span>
-                    </a>
-                </li>
-               
-                 <li>
-                    <a href="logout.php" class="sidebar-link bg-red-500 hover:bg-red-600 text-white font-bold">
-                        <i class="fas fa-sign-out-alt"></i><span class="link-text">Log Out</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+    <ul>
+        <li>
+            <a href="Dashboard.php" class="sidebar-link active" target="content-frame">
+                <i class="fas fa-tachometer-alt"></i><span class="link-text">Dashboard</span>
+            </a>
+        </li>
+        
+        <li>
+            <a href="add_ritwik.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-user-tie"></i><span class="link-text">Add Ritwik</span>
+            </a>
+        </li>
+        <li>
+            <a href="add_family.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-users"></i><span class="link-text">Add Family</span>
+            </a>
+        </li>
+        <li>
+            <a href="donation_types.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-donate"></i><span class="link-text">Donation Types</span>
+            </a>
+        </li>
+        <li>
+            <a href="arghya_pradan.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-praying-hands"></i><span class="link-text">Arghya Pradan</span>
+            </a>
+        </li>
+         <li>
+            <a href="invoice_list.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-file-invoice"></i><span class="link-text">View Invoices</span>
+            </a>
+        </li>
+         <li>
+            <a href="add_employee.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-user-plus"></i><span class="link-text">Add Employee</span>
+            </a>
+        </li>
+         <li>
+            <a href="stock_management.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-boxes"></i><span class="link-text"> Stock Management</span>
+            </a>
+        </li>
+         <li>
+            <a href="expense_management.php" class="sidebar-link" target="content-frame">
+                <i class="fas fa-wallet"></i><span class="link-text"> Expense Management</span>
+            </a>
+        </li>
+        
+         <li>
+            <a href="logout.php" class="sidebar-link bg-red-500 hover:bg-red-600 text-white font-bold">
+                <i class="fas fa-sign-out-alt"></i><span class="link-text">Log Out</span>
+            </a>
+        </li>
+    </ul>
+</nav>
 
         <div class="sidebar-footer mt-auto text-center text-gray-400 text-xs flex-shrink-0 pt-4">
             <p>&copy; <?php echo date("Y"); ?> Your Company</p>
