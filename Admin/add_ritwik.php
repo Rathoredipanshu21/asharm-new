@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- ACTION: ADD RITWIK ---
     if ($action === 'add') {
-        if (empty($_POST['unique_id']) || empty($_POST['name']) || empty($_POST['details']) || empty($_POST['password']) || !isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+        // Validation check updated: 'details' is no longer required.
+        if (empty($_POST['unique_id']) || empty($_POST['name']) || empty($_POST['password']) || !isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
             $formMessage = "Please fill all required fields and upload an image.";
             $formMessageType = 'error';
         } else {
@@ -37,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $hashed_password = password_hash($_POST['password'], PASSWORD_DEFAULT);
                     $sql = "INSERT INTO ritwiks (unique_id, name, details, password, image_path) VALUES (?, ?, ?, ?, ?)";
                     $stmt = $pdo->prepare($sql);
-                    $stmt->execute([$_POST['unique_id'], $_POST['name'], $_POST['details'], $hashed_password, $target_file]);
+                    // Use trim on details, but it's okay if it's empty
+                    $stmt->execute([$_POST['unique_id'], $_POST['name'], trim($_POST['details']), $hashed_password, $target_file]);
                     $formMessage = "New RITWIK added successfully!";
                     $formMessageType = 'success';
                 } catch (PDOException $e) {
@@ -55,10 +57,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'update') {
         $ritwik_id = $_POST['ritwik_id'];
         $name = trim($_POST['name']);
-        $details = trim($_POST['details']);
         
-        $sql = "UPDATE ritwiks SET name = ?, details = ?";
-        $params = [$name, $details];
+        $sql = "UPDATE ritwiks SET name = ?";
+        $params = [$name];
+
+        // Handle optional details update (This part is already correct)
+        // It will only update details if the field is not empty.
+        // If you want to allow clearing the field, we should change this.
+        // For now, it will update with the submitted value.
+        if (isset($_POST['details'])) {
+            $sql .= ", details = ?";
+            $params[] = trim($_POST['details']);
+        }
 
         // Handle optional password update
         if (!empty($_POST['password'])) {
@@ -68,12 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Handle optional image update
         if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            // First, get old image path to delete it later
             $oldImagePath = $pdo->prepare("SELECT image_path FROM ritwiks WHERE id = ?");
             $oldImagePath->execute([$ritwik_id]);
             $oldImage = $oldImagePath->fetchColumn();
 
-            // Upload new image
             $target_dir = "uploads/";
             $image_extension = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
             $new_target_file = $target_dir . uniqid('ritwik_', true) . '.' . $image_extension;
@@ -81,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if(move_uploaded_file($_FILES["image"]["tmp_name"], $new_target_file)) {
                 $sql .= ", image_path = ?";
                 $params[] = $new_target_file;
-                // Delete old image if it exists and is not a placeholder
                 if ($oldImage && file_exists($oldImage)) {
                     unlink($oldImage);
                 }
@@ -106,16 +113,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $ritwik_id = $_POST['ritwik_id'];
         try {
-            // First, get the image path to delete the file
             $stmt = $pdo->prepare("SELECT image_path FROM ritwiks WHERE id = ?");
             $stmt->execute([$ritwik_id]);
             $image_path = $stmt->fetchColumn();
 
-            // Then, delete the record from DB
             $stmt = $pdo->prepare("DELETE FROM ritwiks WHERE id = ?");
             $stmt->execute([$ritwik_id]);
 
-            // Finally, delete the image file from server
             if ($image_path && file_exists($image_path)) {
                 unlink($image_path);
             }
@@ -227,7 +231,7 @@ $nextUniqueId = getNextRitwikId($pdo);
                 <div class="space-y-4">
                     <div><label class="block text-sm font-medium text-gray-700">Unique ID</label><input type="text" name="unique_id" value="<?= htmlspecialchars($nextUniqueId) ?>" readonly class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm"></div>
                     <div><label for="add-name" class="block text-sm font-medium text-gray-700">Full Name</label><input type="text" id="add-name" name="name" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
-                    <div><label for="add-details" class="block text-sm font-medium text-gray-700">Details / Bio</label><textarea id="add-details" name="details" rows="4" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea></div>
+                    <div><label for="add-details" class="block text-sm font-medium text-gray-700">Details / Bio (optional)</label><textarea id="add-details" name="details" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea></div>
                     <div><label for="add-password" class="block text-sm font-medium text-gray-700">Password</label><input type="password" id="add-password" name="password" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
                     <div><label class="block text-sm font-medium text-gray-700">Profile Image</label><div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"><div class="space-y-1 text-center"><i class="fas fa-image fa-3x text-gray-400 mx-auto"></i><div class="flex text-sm text-gray-600"><label for="add-image" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500"><span>Upload a file</span><input id="add-image" name="image" type="file" class="sr-only" required></label><p class="pl-1">or drag and drop</p></div><p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p></div></div></div>
                 </div>
@@ -245,7 +249,7 @@ $nextUniqueId = getNextRitwikId($pdo);
                 <div class="space-y-4">
                     <div class="text-center"><img id="edit-image-preview" src="" alt="Current Image" class="w-32 h-32 rounded-full object-cover mx-auto mb-4 border-4 border-gray-200"></div>
                     <div><label for="edit-name" class="block text-sm font-medium text-gray-700">Full Name</label><input type="text" id="edit-name" name="name" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
-                    <div><label for="edit-details" class="block text-sm font-medium text-gray-700">Details / Bio</label><textarea id="edit-details" name="details" rows="4" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea></div>
+                    <div><label for="edit-details" class="block text-sm font-medium text-gray-700">Details / Bio (optional)</label><textarea id="edit-details" name="details" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea></div>
                     <div><label for="edit-password" class="block text-sm font-medium text-gray-700">New Password (optional)</label><input type="password" id="edit-password" name="password" placeholder="Leave blank to keep current password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></div>
                     <div><label class="block text-sm font-medium text-gray-700">Change Profile Image (optional)</label><input id="edit-image" name="image" type="file" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"></div>
                 </div>

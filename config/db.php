@@ -1,14 +1,11 @@
 <?php
-// --- Database Credentials ---
-// Define constants for the database connection details.
-// This makes it easy to manage and use them for both connection types.
+
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'ashram_management'); // Changed from 'ashram_management' to match the SQL setup
+define('DB_NAME', 'ashram_management'); 
 
-// --- Connection Method 1: MySQLi (Procedural/Object-Oriented) ---
-// This creates the $conn variable used by your donation management page.
+
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 // Check the MySQLi connection for errors.
@@ -39,5 +36,8 @@ try {
 }
 
 ?>
+
+
+
 
 

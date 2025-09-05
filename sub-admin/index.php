@@ -191,15 +191,30 @@ $full_name = $_SESSION['user'];
 
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="../Admin/Dashboard.php" class="sidebar-link active" target="content-frame"><i class="fas fa-tachometer-alt"></i><span class="link-text">Dashboard</span></a></li>
-                <li><a href="../Admin/add_ritwik.php" class="sidebar-link" target="content-frame"><i class="fas fa-user-tie"></i><span class="link-text">Add Ritwik</span></a></li>
-                <li><a href="../Admin/add_family.php" class="sidebar-link" target="content-frame"><i class="fas fa-users"></i><span class="link-text">Add Family</span></a></li>
-                <li><a href="../Admin/donation_types.php" class="sidebar-link" target="content-frame"><i class="fas fa-donate"></i><span class="link-text">Donation Types</span></a></li>
-                <li><a href="../Admin/arghya_pradan.php" class="sidebar-link" target="content-frame"><i class="fas fa-praying-hands"></i><span class="link-text">Arghya Pradan</span></a></li>
-                <li><a href="../Admin/invoice_list.php" class="sidebar-link" target="content-frame"><i class="fas fa-file-invoice"></i><span class="link-text">View Invoices</span></a></li>
-               
-                <li><a href="logout.php" class="sidebar-link mt-4 !text-red-500 hover:!bg-red-50 hover:!text-red-600"><i class="fas fa-sign-out-alt"></i><span class="link-text">Log Out</span></a></li>
-            </ul>
+    <li><a href="../Admin/Dashboard.php" class="sidebar-link active" target="content-frame"><i class="fas fa-tachometer-alt"></i><span class="link-text">Dashboard</span></a></li>
+    
+    <li><a href="../Admin/add_ritwik.php" class="sidebar-link" target="content-frame"><i class="fas fa-user-tie"></i><span class="link-text">Manage Ritwiks</span></a></li>
+    <li><a href="../Admin/add_family.php" class="sidebar-link" target="content-frame"><i class="fas fa-users"></i><span class="link-text">Family Directory</span></a></li>
+    <li><a href="../Admin/donation_types.php" class="sidebar-link" target="content-frame"><i class="fas fa-tags"></i><span class="link-text">Offering Categories</span></a></li>
+    
+    <li><a href="../Admin/arghya_pradan.php" class="sidebar-link" target="content-frame"><i class="fas fa-praying-hands"></i><span class="link-text">Record Arghya</span></a></li>
+    <li><a href="../Admin/pranami.php" class="sidebar-link" target="content-frame"><i class="fas fa-hand-holding-dollar"></i><span class="link-text">Record Pranami</span></a></li>
+    <li>
+        <a href="../Admin/utsav_donation.php" class="sidebar-link" target="content-frame">
+            <i class="fas fa-donate"></i><span class="link-text">Record Donation</span>
+        </a>
+    </li>
+    
+    <li><a href="../Admin/invoice_list.php" class="sidebar-link" target="content-frame"><i class="fas fa-receipt"></i><span class="link-text">Arghya History</span></a></li>
+    <li><a href="../Admin/view_recent_invoices.php" class="sidebar-link" target="content-frame"><i class="fas fa-history"></i><span class="link-text">Pranami History</span></a></li>
+    <li>
+        <a href="../Admin/view_donations_invoice.php" class="sidebar-link" target="content-frame">
+            <i class="fas fa-receipt"></i><span class="link-text">Donation History</span>
+        </a>
+    </li>
+    
+    <li><a href="logout.php" class="sidebar-link mt-4 !text-red-500 hover:!bg-red-50 hover:!text-red-600"><i class="fas fa-sign-out-alt"></i><span class="link-text">Log Out</span></a></li>
+</ul>
         </nav>
 
         <div class="sidebar-footer mt-auto text-center text-gray-500 text-xs flex-shrink-0 pt-4">

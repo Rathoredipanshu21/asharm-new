@@ -1,3 +1,13 @@
+<?php
+// Initialize the session
+session_start();
+
+// Check if the user is logged in. If not, redirect them to the login page.
+if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
+    header("location: login.php");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,61 +177,88 @@
         </div>
 
         <nav class="sidebar-nav">
-    <ul>
-        <li>
-            <a href="Dashboard.php" class="sidebar-link active" target="content-frame">
-                <i class="fas fa-tachometer-alt"></i><span class="link-text">Dashboard</span>
-            </a>
-        </li>
-        
-        <li>
-            <a href="add_ritwik.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-user-tie"></i><span class="link-text">Add Ritwik</span>
-            </a>
-        </li>
-        <li>
-            <a href="add_family.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-users"></i><span class="link-text">Add Family</span>
-            </a>
-        </li>
-        <li>
-            <a href="donation_types.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-donate"></i><span class="link-text">Donation Types</span>
-            </a>
-        </li>
-        <li>
-            <a href="arghya_pradan.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-praying-hands"></i><span class="link-text">Arghya Pradan</span>
-            </a>
-        </li>
-         <li>
-            <a href="invoice_list.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-file-invoice"></i><span class="link-text">View Invoices</span>
-            </a>
-        </li>
-         <li>
-            <a href="add_employee.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-user-plus"></i><span class="link-text">Add Employee</span>
-            </a>
-        </li>
-         <li>
-            <a href="stock_management.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-boxes"></i><span class="link-text"> Stock Management</span>
-            </a>
-        </li>
-         <li>
-            <a href="expense_management.php" class="sidebar-link" target="content-frame">
-                <i class="fas fa-wallet"></i><span class="link-text"> Expense Management</span>
-            </a>
-        </li>
-        
-         <li>
-            <a href="logout.php" class="sidebar-link bg-red-500 hover:bg-red-600 text-white font-bold">
-                <i class="fas fa-sign-out-alt"></i><span class="link-text">Log Out</span>
-            </a>
-        </li>
-    </ul>
-</nav>
+           <ul>
+            <li>
+                <a href="Dashboard.php" class="sidebar-link active" target="content-frame">
+                    <i class="fas fa-tachometer-alt"></i><span class="link-text">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="add_family.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-users"></i><span class="link-text">Family Records</span>
+                </a>
+            </li>
+            <li>
+                <a href="arghya_pradan.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-praying-hands"></i><span class="link-text">Record Arghya</span>
+                </a>
+            </li>
+            <li>
+                <a href="pranami.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-hand-holding-dollar"></i><span class="link-text">Record Pranami</span>
+                </a>
+            </li>
+            <li>
+                <a href="utsav_donation.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-donate"></i><span class="link-text">Record Donation</span>
+                </a>
+            </li>
+            <li>
+                <a href="expense_management.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-file-invoice-dollar"></i><span class="link-text">Expenses</span>
+                </a>
+            </li>
+            <li>
+                <a href="invoice_list.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-receipt"></i><span class="link-text">Arghya History</span>
+                </a>
+            </li>
+            <li>
+                <a href="view_recent_invoices.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-history"></i><span class="link-text">Pranami History</span>
+                </a>
+            </li>
+            <li>
+                <a href="view_donations_invoice.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-receipt"></i><span class="link-text">Donation History</span>
+                </a>
+            </li>
+            <li>
+                <a href="add_ritwik.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-user-tie"></i><span class="link-text">Manage Ritwiks</span>
+                </a>
+            </li>
+            <li>
+                <a href="add_employee.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-id-badge"></i><span class="link-text">Employee Management</span>
+                </a>
+            </li>
+             <li>
+                <a href="stock_management.php" class="sidebar-link" target="content-frame">
+                    <i class="fas fa-boxes-stacked"></i><span class="link-text">Inventory</span>
+                </a>
+            </li>
+           <!-- For Managing the types of donations -->
+<li>
+    <a href="donation_types.php" class="sidebar-link" target="content-frame">
+        <i class="fas fa-sitemap"></i><span class="link-text">Offering Categories</span>
+    </a>
+</li>
+
+<!-- For the detailed report on Ritwik earnings and payments -->
+<li>
+    <a href="ritwik_dakshina_report.php" class="sidebar-link" target="content-frame">
+        <i class="fas fa-file-invoice-dollar"></i><span class="link-text">Ritwik Accounts</span>
+    </a>
+</li>
+
+            <li>
+                <a href="logout.php" class="sidebar-link bg-red-500 hover:bg-red-600 text-white font-bold">
+                    <i class="fas fa-sign-out-alt"></i><span class="link-text">Log Out</span>
+                </a>
+            </li>
+        </ul>
+        </nav>
 
         <div class="sidebar-footer mt-auto text-center text-gray-400 text-xs flex-shrink-0 pt-4">
             <p>&copy; <?php echo date("Y"); ?> Your Company</p>
@@ -229,13 +266,20 @@
     </aside>
 
     <div id="main-content-wrapper" class="flex-1 flex flex-col">
-        <header class="p-4 flex items-center space-x-3 bg-gray-100/80 backdrop-blur-sm sticky top-0 z-10">
-             <button id="menu-toggle" class="header-btn flex items-center justify-center">
-                <i class="fas fa-bars"></i>
-            </button>
-             <button id="fullscreen-toggle" class="header-btn flex items-center justify-center">
-                <i id="fullscreen-icon" class="fas fa-expand"></i>
-            </button>
+        <header class="p-4 flex items-center justify-between space-x-3 bg-gray-100/80 backdrop-blur-sm sticky top-0 z-10">
+            <div class="flex items-center space-x-3">
+                <button id="menu-toggle" class="header-btn flex items-center justify-center">
+                   <i class="fas fa-bars"></i>
+               </button>
+                <button id="fullscreen-toggle" class="header-btn flex items-center justify-center">
+                   <i id="fullscreen-icon" class="fas fa-expand"></i>
+               </button>
+            </div>
+
+            <div class="flex items-center space-x-2 text-gray-600">
+                <i class="fas fa-user-circle text-xl"></i>
+                <span class="font-semibold text-sm">Welcome, <?php echo htmlspecialchars($_SESSION["username"]); ?></span>
+            </div>
         </header>
 
         <main class="flex-1 p-6 pt-2">
