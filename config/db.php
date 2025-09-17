@@ -5,7 +5,6 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'ashram_management'); 
 
-
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 // Check the MySQLi connection for errors.
@@ -36,6 +35,7 @@ try {
 }
 
 ?>
+
 
 
 

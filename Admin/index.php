@@ -246,9 +246,14 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
 </li>
 
 <!-- For the detailed report on Ritwik earnings and payments -->
-<li>
+    <li>
     <a href="ritwik_dakshina_report.php" class="sidebar-link" target="content-frame">
         <i class="fas fa-file-invoice-dollar"></i><span class="link-text">Ritwik Accounts</span>
+    </a>
+</li>
+<li>
+    <a href="reset-password.php" class="sidebar-link" target="content-frame">
+        <i class="fas fa-user-shield"></i><span class="link-text">Security</span>
     </a>
 </li>
 
